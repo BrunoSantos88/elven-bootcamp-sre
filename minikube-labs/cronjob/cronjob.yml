@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-kube-config
+spec:
+  schedule: "*/5 * * * *"
+  timeZone: "America/Sao_Paulo"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: fetch-kube-config-container
+            image: curlimages/curl:latest 
+            command:
+              - "/bin/sh"
+              - "-c"
+              - |
+                ~/.kube/config  /home/bruno/config
+                kubectl config view --raw > /mnt/home/bruno/config
+            volumeMounts:
+            - mountPath: /mnt
+              name: config-volume
+          restartPolicy: OnFailure
+          volumes:
+          - name: config-volume
+            hostPath:
+              path: /home/bruno/.kube 
+              type: Directory
