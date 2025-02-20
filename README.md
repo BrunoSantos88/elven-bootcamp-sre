@@ -1,7 +1,5 @@
 # Bootcamp de Formação SRE
 
-* Conteúdo do Curso
-
 - Módulo 01: Cloud & Redes em Nuvem
 
 1. Como criar e acessar contas nas Clouds e modos de acessos
