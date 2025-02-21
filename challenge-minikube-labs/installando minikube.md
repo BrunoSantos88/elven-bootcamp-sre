@@ -7,7 +7,9 @@ sudo dpkg -i minikube_latest_amd64.deb
 
 # commandos minikube
 
-minikube start --nodes 3 --memory 4g --force
-minikube start --nodes 3 -p elfoscluster --memory 4g --driver=docker --force
+sudo minikube start --nodes 3 --memory 4g --force
+sudo minikube start --nodes 3 -p elfoscluster --memory 4g --driver=docker --force 
+
+sudo usermod -aG docker $USER
 
 minikube status -p elfocluster

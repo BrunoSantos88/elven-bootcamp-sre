@@ -14,14 +14,26 @@
 10. Wordpress em Nuvem [3/4] - Armazenamentos com resiliência - Multi AZ
 11. Wordpress em Nuvem [4/4] - Balanceador, Auto-scalling e arquitetura pronta (resiliente)
 
-- Módulo 02: Containers, Orquestração e Introdução a Banco de Dados
+# Módulo 02: Containers, Orquestração e Introdução a Banco de Dados
 
-- Módulo 03: Infraestrutura como código
+- Descrição
 
-- Módulo 04: Observabilidade & Monitoramento
+- Bem vindo ao módulo 4. Nesta seção, você será apresentado aos conceitos de container e banco de Dados, incluindo aulas teóricas e práticas sobre as principais ferramentas de mercado. Neste módulo, usamos Docker para criação de containers e  Docker Compose e Kubernetes para orquestração destes. Além disso, usamos  Postgres e Redis  para trabalharmos o conceito de Banco de Dados SQL e NoSQL. Todas as aulas foram criadas para serem de fácil entendimento  e os laboratórios fáceis de seguir, mas se você ainda tiver dúvidas ou dificuldades, sinta-se livre para mandá-las no nosso servidor do discord.
 
-- Módulo 05: CI/CD
+- O que vamos aprender no Módulo 02?
+- Docker Container fundamentos;
+- Orquestração de containers (Docker compose e Kubernetes);
+- Introdução a Banco de Dados;
+- Banco de Dados SQL com Postgres;
+- Banco de Dados SQL com AWS RDS com Postgres;
+- Banco de Dados NoSQL com AWS Elasticache(Redis).
 
-- Módulo 06: FinOps, Cloud-Native + 12Apps, Application Security
+# Módulo 03: Infraestrutura como código
 
-- Desafio Final
+# Módulo 04: Observabilidade & Monitoramento
+
+# Módulo 05: CI/CD
+
+# Módulo 06: FinOps, Cloud-Native + 12Apps, Application Security
+
+# Desafio Final

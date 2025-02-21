@@ -1,3 +1,3 @@
 # Criar rancher local via docker
 
-docker run --restart=unless-stopped -p 80:80 -p 443:443 rancher/rancher:latest
+sudo docker run --restart=unless-stopped --privileged -p 81:80 -p -d 443:443 rancher/rancher:latest
