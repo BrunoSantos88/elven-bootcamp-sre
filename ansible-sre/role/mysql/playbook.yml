@@ -1,0 +1,31 @@
+---
+- name: Instalação e configuração do MySQL para WordPress
+  hosts: localhost
+  become: yes  # Para garantir permissões elevadas (root)
+  
+  tasks:
+    # Instala o MySQL Server e os pacotes necessários
+    - name: Instalar pacotes do MySQL
+      apt:
+        pkg:
+          - mysql-server
+          - mysql-client
+          - python3-mysqldb
+          - libmysqlclient-dev
+        update_cache: yes
+        state: present
+
+    # Cria o usuário no MySQL com permissões
+    - name: Criando usuário no banco MySQL
+      mysql_user:
+        name: "wpuser"
+        password: "Wp@12345"
+        priv: '*.*:ALL'
+        host: "%"
+        state: present
+
+    # Cria o banco de dados wordpress
+    - name: Criando banco de dados wordpress
+      mysql_db:
+        name: "wordpress"
+        state: present

@@ -1,0 +1,100 @@
+# Playbook to uninstall K3s and reinstall on workers, masters, and bootstrapMasters
+
+- name: Uninstall K3s on workers
+  become: true
+  hosts: k8s-master
+  tasks:
+    - name: Ping hosts to check connectivity
+      ansible.builtin.ping:
+
+    - name: Uninstall k3s agent on worker node
+      command: /usr/local/bin/k3s-agent-uninstall.sh
+
+    - name: Confirm K3s agent is uninstalled on worker node
+      command: which k3s-agent || echo "k3s-agent not found"
+
+- name: Uninstall K3s on master servers
+  become: true
+  hosts: masters
+  tasks:
+    - name: Ping hosts to check connectivity
+      ansible.builtin.ping:
+
+    - name: Uninstall k3s server on master node
+      command: /usr/local/bin/k3s-uninstall.sh
+
+    - name: Confirm K3s server is uninstalled on master node
+      command: which k3s || echo "k3s not found"
+
+- name: Uninstall K3s on bootstrap master
+  become: true
+  hosts: bootstrapMaster
+  tasks:
+    - name: Ping hosts to check connectivity
+      ansible.builtin.ping:
+
+    - name: Uninstall k3s server on bootstrap master node
+      command: /usr/local/bin/k3s-uninstall.sh
+
+    - name: Confirm K3s server is uninstalled on bootstrap master node
+      command: which k3s || echo "k3s not found"
+
+# Reinstall K3s on workers
+- name: Install K3s on workers
+  become: true
+  hosts: workers
+  tasks:
+    - name: Ping hosts to check connectivity
+      ansible.builtin.ping:
+
+    - name: Install k3s agent on worker node
+      shell: |
+        curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s-agent
+
+    - name: Ensure k3s agent service is started
+      service:
+        name: k3s-agent
+        state: started
+        enabled: yes
+
+# Reinstall K3s on master servers
+- name: Install K3s on masters
+  become: true
+  hosts: masters
+  tasks:
+    - name: Ping hosts to check connectivity
+      ansible.builtin.ping:
+
+    - name: Install k3s server on master node
+      shell: |
+        curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Ensure k3s service is started
+      service:
+        name: k3s
+        state: started
+        enabled: yes
+
+# Reinstall K3s on bootstrap master
+- name: Install K3s on bootstrap masters
+  become: true
+  hosts: bootstrapMaster
+  tasks:
+    - name: Ping hosts to check connectivity
+      ansible.builtin.ping:
+
+    - name: Install k3s server on bootstrap master node
+      shell: |
+        curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Ensure k3s service is started on bootstrap master
+      service:
+        name: k3s
+        state: started
+        enabled: yes
