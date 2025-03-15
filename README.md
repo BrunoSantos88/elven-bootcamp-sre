@@ -37,6 +37,20 @@
 
 # Módulo 04: Observabilidade & Monitoramento
 
+O que vamos aprender no Módulo 04?  </p>
+Conceito Centralização de Logs; </p>
+Conceito Geral de Monitoramento;</p>
+Conceito Geral de Observabilidade; </p>
+Conceito de Métricas;</p>
+Conceito de Gestão de Incidentes; </p>
+Conceito de Matriz de Resiliência; </p>
+Zabbix; </p>
+Elastic Stack; </p>
+Prometheus;</p>
+Grafana; </p>
+Jaeger; </p>
+One Platform.</p>
+
 # Módulo 05: CI/CD
 
 # Módulo 06: FinOps, Cloud-Native + 12Apps, Application Security
