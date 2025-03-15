@@ -30,6 +30,13 @@
 
 # Módulo 03: Infraestrutura como código
 
+- O que vamos aprender no Módulo 03?
+- Introdução à Ambientes;
+- Introdução à IaC;
+- Laboratório hands-on: Ansible
+- Laboratório hands-on: Terraform;
+- Laboratório hands-on: Integração entre Ansible e Terraform.
+
 # Módulo 04: Observabilidade & Monitoramento
 
 # Módulo 05: CI/CD
