@@ -18,8 +18,6 @@
 
 - Descrição
 
-- Bem vindo ao módulo 4. Nesta seção, você será apresentado aos conceitos de container e banco de Dados, incluindo aulas teóricas e práticas sobre as principais ferramentas de mercado. Neste módulo, usamos Docker para criação de containers e  Docker Compose e Kubernetes para orquestração destes. Além disso, usamos  Postgres e Redis  para trabalharmos o conceito de Banco de Dados SQL e NoSQL. Todas as aulas foram criadas para serem de fácil entendimento  e os laboratórios fáceis de seguir, mas se você ainda tiver dúvidas ou dificuldades, sinta-se livre para mandá-las no nosso servidor do discord.
-
 - O que vamos aprender no Módulo 02?
 - Docker Container fundamentos;
 - Orquestração de containers (Docker compose e Kubernetes);
