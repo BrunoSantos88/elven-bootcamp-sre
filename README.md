@@ -53,8 +53,29 @@ One Platform.</p>
 
 # Módulo 05: CI/CD
 
+- O que vamos aprender no Módulo 05?
+- Conceitos de Continuous Integration;
+- Conceitos de Continuous Delivery;
+- Continuous Deployment;
+- Estratégias de deployment;
+- Conceitos relacionados a Frontend e Backend;
+- Deploy de uma aplicação React no S3 usando GitHUb Action;
+- Deploy de uma aplicação NodeJs no EC2 usando GitHUb Action;
+- Deploy de uma aplicação React no S3 usando GitHUb Action;
+- Deploy de uma aplicação React no Heroku;
+- Deploy de uma aplicação React no Firebase;
+- Conceitos de CDN e WAF.
+
 # Módulo 06: FinOps, Cloud-Native + 12Apps, Application Security
+
+- O que vamos aprender no Módulo 06?
+- Team topologies - o que é, como aplicar e vantagens da prática;
+- DORA metrics - o que são, para que servem e como aplicá-las - de acordo com o livro Accelerate;
+- Conceito Geral de Observabilidade;
+- 12 Factor Apps e modernização de aplicações;
+- Aprofundamento em FinOps;
+- Application Security - em parceria com a Conviso;
+
 
 # Desafio Final
 
---ffff
