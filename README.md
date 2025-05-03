@@ -11,3 +11,19 @@
 - Introdução a versionamento e controle com git
 - Comandos básicos de git
 - Vagrant
+
+# SRE 
+
+- Módulo 01: Cloud & Redes em Nuvem
+
+- Módulo 02: Containers, Orquestração e Introdução a Banco de Dados
+
+- Módulo 03: Infraestrutura como código
+
+- Módulo 04: Observabilidade & Monitoramento
+
+- Módulo 05: CI/CD
+
+- Módulo 06: FinOps, Cloud-Native + 12Apps, Application Security
+
+- Desafio Final
