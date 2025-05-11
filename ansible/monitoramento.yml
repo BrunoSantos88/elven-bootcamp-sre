@@ -1,0 +1,7 @@
+---
+- name: Instalar e configurar WordPress
+  hosts: goldsignal
+  become: yes
+
+  roles:
+    - prometheus
