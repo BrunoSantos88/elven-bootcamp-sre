@@ -1,0 +1,85 @@
+- name: Cria usuário prometheus
+  ansible.builtin.user:
+    name: prometheus
+    shell: /usr/sbin/nologin
+    system: yes
+    create_home: no
+
+- name: Cria diretórios necessários
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+  loop:
+    - "/opt/prometheus"
+    - "/etc/prometheus"
+    - "/etc/prometheus/rules"
+    - "/var/lib/prometheus"
+
+- name: Baixa Prometheus
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-2.52.0.linux-amd64.tar.gz"
+    dest: "/tmp/prometheus.tar.gz"
+
+- name: Descompacta Prometheus
+  ansible.builtin.unarchive:
+    src: "/tmp/prometheus.tar.gz"
+    dest: "/tmp/"
+    remote_src: yes
+
+- name: Copia binários do Prometheus
+  ansible.builtin.copy:
+    src: "/tmp/prometheus-2.52.0.linux-amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    mode: '0755'
+    remote_src: yes
+  loop:
+    - prometheus
+    - promtool
+
+- name: Copia arquivo de configuração do Prometheus
+  ansible.builtin.copy:
+    src: "prometheus.yml"
+    dest: "/etc/prometheus/prometheus.yml"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+
+- name: Copia regras de alerta do Prometheus
+  ansible.builtin.copy:
+    src: "alert.rules.yml"
+    dest: "/etc/prometheus/rules/alert.rules.yml"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+
+- name: Cria serviço systemd do Prometheus
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/prometheus.service"
+    content: |
+      [Unit]
+      Description=Prometheus
+      After=network.target
+
+      [Service]
+      User=prometheus
+      ExecStart=/usr/local/bin/prometheus \
+        --config.file=/etc/prometheus/prometheus.yml \
+        --storage.tsdb.path=/var/lib/prometheus
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+
+- name: Recarrega systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Inicia e habilita o Prometheus
+  ansible.builtin.service:
+    name: prometheus
+    state: restarted
+    enabled: yes

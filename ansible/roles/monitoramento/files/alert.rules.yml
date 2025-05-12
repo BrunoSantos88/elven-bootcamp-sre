@@ -1,0 +1,20 @@
+groups:
+  - name: example
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instância {{ $labels.instance }} está fora do ar"
+          description: "O alvo {{ $labels.job }} em {{ $labels.instance }} está fora há mais de 1 minuto."
+          
+      - alert: HighMemoryUsage
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.2
+        for: 2m
+        labels:
+          severity: high
+        annotations:
+          summary: "Uso de memória alta no {{ $labels.instance }}"
+          description: "O uso de memória no {{ $labels.instance }} ultrapassou 80% nos últimos 2 minutos."

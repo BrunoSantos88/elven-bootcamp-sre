@@ -1,0 +1,12 @@
+
+- name: Instalar prometheus
+  import_tasks: install_prometheus.yaml
+
+- name: Instalar grafana
+  import_tasks: install_grafana.yaml
+
+- name: Instala o Alertmanager
+  include_tasks: install_alertmanager.yaml
+
+- name: Instala o node_exported
+  include_tasks: install_node_exported.yml

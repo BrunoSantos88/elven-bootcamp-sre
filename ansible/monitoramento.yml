@@ -1,7 +1,6 @@
----
-- name: Instalar e configurar WordPress
+- name: Instala Prometheus
   hosts: goldsignal
   become: yes
 
   roles:
-    - prometheus
+    - monitoramento
