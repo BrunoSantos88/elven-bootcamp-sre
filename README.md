@@ -49,3 +49,7 @@ Criar um servidor com o site WordPress na AWS de forma automatizada e efetuar o 
 - Criar um ambiente mínimo de Monitoramento ou Observabilidade, usando Prometheus, Grafana(*) e 1P(*);
 
 - Criar indicadores para CPU, Memória, Disco e Request HTTP ou para The Four Golden Signals(Latência, Tráfego, Erros e Saturação) .
+
+<p align="center">
+  <img src="wordpressturbinado.png" alt="Imagem da Tela Inicial" width="800"> 
+</p>
