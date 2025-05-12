@@ -1,16 +1,17 @@
+- name: Instala o Node Exporter
+  import_tasks: install_node_exporter.yml
 
-- name: Instalar prometheus
-  import_tasks: install_prometheus.yaml
-
-- name: Instalar grafana
-  import_tasks: install_grafana.yaml
+- name: Instala o Prometheus
+  import_tasks: install_prometheus.yml
 
 - name: Instala o Alertmanager
-  include_tasks: install_alertmanager.yaml
+  import_tasks: install_alertmanager.yml
 
-- name: Instala o node_exported
-  include_tasks: install_node_exported.yml
+- name: Instala o Grafana
+  import_tasks: install_grafana.yml
 
-- name: Instala o status servicoes
-  include_tasks: status.yaml
+- name: Cria DataSource Prometheus no Grafana
+  import_tasks: configure_grafana_datasource.yml
 
+- name: Verifica status dos serviços
+  import_tasks: verify_services.yml
