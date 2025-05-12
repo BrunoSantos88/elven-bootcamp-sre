@@ -10,3 +10,7 @@
 
 - name: Instala o node_exported
   include_tasks: install_node_exported.yml
+
+- name: Instala o status servicoes
+  include_tasks: status.yaml
+

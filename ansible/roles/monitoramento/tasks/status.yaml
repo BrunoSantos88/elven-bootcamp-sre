@@ -1,0 +1,28 @@
+    - name: Verifica se o serviço Prometheus está ativo
+      ansible.builtin.systemd:
+        name: prometheus
+      register: prometheus_status
+
+    - name: Verifica se o serviço Grafana está ativo
+      ansible.builtin.systemd:
+        name: grafana-server
+      register: grafana_status
+
+    - name: Verifica se o serviço Alertmanager está ativo
+      ansible.builtin.systemd:
+        name: alertmanager
+      register: alertmanager_status
+
+    - name: Verifica se o serviço Node Exporter está ativo
+      ansible.builtin.systemd:
+        name: node_exporter
+      register: node_exporter_status
+
+    - name: Exibe status dos serviços
+      ansible.builtin.debug:
+        msg:
+          - "Prometheus: {{ prometheus_status.status.ActiveState }}"
+          - "Grafana: {{ grafana_status.status.ActiveState }}"
+          - "Alertmanager: {{ alertmanager_status.status.ActiveState }}"
+          - "Node Exporter: {{ node_exporter_status.status.ActiveState }}"
+ 
