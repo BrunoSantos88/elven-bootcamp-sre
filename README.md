@@ -1,11 +1,4 @@
 # Wordpress Turbinado 2.0
-
-Infrastructure as Code, instalação automatizada do WordPress e Monitoramento na AWS.
-
-<p align="center">
-  <img src="wordpressturbinado.png" alt="Arquitetura" width="800">
-</p>
-
 ---
 
 ## Objetivo
