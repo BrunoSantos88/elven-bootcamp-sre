@@ -3,5 +3,4 @@ golssignal.pem
 inventory.ini
 wordpress.ini
 monitoramento.ini
-.vault_pass
-group_vars/wordpressturbinado/vault.yml
+.env

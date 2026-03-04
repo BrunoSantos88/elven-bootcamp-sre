@@ -234,29 +234,25 @@ ansible_ssh_private_key_file=~/.ssh/id_ed25519
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
-### Configurar variáveis sensíveis com Ansible Vault
+### Configurar variáveis sensíveis com .env
 
-Crie o arquivo `ansible/group_vars/wordpressturbinado/vault.yml` (não versionado):
+Copie o arquivo de exemplo e preencha com os valores reais:
 
 ```bash
 cd ansible/
-ansible-vault create group_vars/wordpressturbinado/vault.yml
+cp .env.example .env
 ```
 
-Conteúdo do vault (substitua pelos valores reais):
+Edite o `.env` com os dados do seu ambiente:
 
 ```yaml
-vault_db_host:     "<OUTPUT_DO_TERRAFORM_rds_endpoint>"
-vault_db_name:     "wordpress"
-vault_db_user:     "wpuser"
-vault_db_password: "<SUA_SENHA_DO_RDS>"
+db_host: "<OUTPUT_DO_TERRAFORM_rds_endpoint>"
+db_name: "wordpress"
+db_user: "wpuser"
+db_password: "<SUA_SENHA_DO_RDS>"
 ```
 
-Para editar depois:
-
-```bash
-ansible-vault edit group_vars/wordpressturbinado/vault.yml
-```
+> O arquivo `.env` está no `.gitignore` e **nunca será versionado**. O `.env.example` serve como template e pode ser commitado.
 
 ### Testar conectividade
 
@@ -271,7 +267,7 @@ ansible -i inventory.ini wordpressturbinado -m ping
 
 ```bash
 cd ansible/
-ansible-playbook -i inventory.ini wordpress.yml --ask-vault-pass
+ansible-playbook -i inventory.ini wordpress.yml
 ```
 
 ### O que é instalado em cada instância

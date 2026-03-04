@@ -2,6 +2,8 @@
 - name: Instalar e configurar WordPress
   hosts: wordpressturbinado
   become: yes
+  vars_files:
+    - .env
 
   roles:
     - wordpress
