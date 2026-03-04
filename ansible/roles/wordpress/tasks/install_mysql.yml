@@ -20,8 +20,8 @@
 
   - name: Criando usuario no banco mysql
     mysql_user:
-      name: "wpuser"
-      password: "Wp@12345"
+      name: "{{ db_user }}"
+      password: "{{ db_password }}"
       priv: '*.*:ALL'
       host: "%"
       state: present
@@ -29,6 +29,6 @@
 
   - name: Criando database wordpress
     mysql_db:
-      name: "wordpress"
+      name: "{{ db_name }}"
       state: present
       login_unix_socket: /var/lib/mysql/mysql.sock

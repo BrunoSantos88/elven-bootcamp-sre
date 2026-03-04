@@ -14,6 +14,60 @@ Provisionar dois servidores WordPress na AWS de forma automatizada com Terraform
 
 ---
 
+## Arquitetura de Rede
+
+```
+                          INTERNET
+                              │
+                    ┌─────────▼──────────┐
+                    │   Internet Gateway  │
+                    └─────────┬──────────┘
+                              │
+          ┌───────────────────▼────────────────────┐
+          │         VPC PÚBLICA 172.16.0.0/16       │
+          │                                          │
+          │  ┌──────────────┐  ┌──────────────┐     │
+          │  │ EC2           │  │ EC2           │     │
+          │  │ wordpress_a   │  │ wordpress_b   │     │
+          │  │ 172.16.1.x    │  │ 172.16.2.x    │     │
+          │  │ (IP público)  │  │ (IP público)  │     │
+          │  └──────┬───────┘  └──────┬────────┘     │
+          └─────────┼────────────────-┼───────────────┘
+                    │   VPC Peering   │
+                    └────────┬────────┘
+                             │
+          ┌──────────────────▼─────────────────────┐
+          │         VPC PRIVADA 10.0.0.0/16         │
+          │                                          │
+          │  ┌────────────────────────────────────┐  │
+          │  │  Subnets Privadas (sem rota IGW)   │  │
+          │  │  10.0.1.0/24  ├── RDS MySQL 8.0   │  │
+          │  │  10.0.2.0/24  │   (não acessível   │  │
+          │  │  10.0.3.0/24  │    pela internet)  │  │
+          │  └───────────────┴───────────────────-┘  │
+          │                                           │
+          │  ┌─────────────────────────────────────┐  │
+          │  │  Subnet NAT (10.0.0.0/24)           │  │
+          │  │  NAT Gateway → Internet (saída only) │  │
+          │  └─────────────────────────────────────┘  │
+          └────────────────────────────────────────────┘
+```
+
+### Princípios de segurança da rede
+
+| Camada | Acesso de entrada | Acesso de saída |
+|--------|------------------|-----------------|
+| EC2 (pública) | Internet (80, 443, 22) | Internet (irrestrito) |
+| RDS (privada) | Apenas EC2 via Peering (3306) | Via NAT Gateway |
+| VPC Peering | Rota bidirecional entre VPCs | — |
+
+- O RDS **não tem IP público** e não é acessível pela internet
+- As EC2 conectam ao RDS pelo endpoint privado via VPC Peering
+- A senha do RDS fica no **AWS SSM Parameter Store** (não no código)
+- As variáveis sensíveis do Ansible ficam em **Ansible Vault** (não versionado)
+
+---
+
 ## Pré-requisitos
 
 - Conta válida na AWS com credenciais configuradas (`aws configure`)
@@ -27,28 +81,41 @@ Provisionar dois servidores WordPress na AWS de forma automatizada com Terraform
 
 ```
 .
-├── infraiscode-aws/        # Infraestrutura Terraform
-│   ├── ec2-instance.tf     # Instâncias EC2 WordPress
-│   ├── vpc-publica.tf      # VPC e configurações de rede
-│   ├── subnet-dba.tf       # Subnets e grupos de subnets RDS
-│   ├── security-group.tf   # Security groups (SSH, HTTP, HTTPS, Node Exporter)
-│   ├── internet-gw.tf      # Internet Gateway
-│   ├── route.tf            # Route tables
+├── infraiscode-public/     # Stack Terraform — VPC pública + EC2
+│   ├── ec2-instance.tf     # Instâncias EC2 WordPress (com IP público e SG)
+│   ├── vpc-publica.tf      # VPC 172.16.0.0/16 + subnets públicas a/b/c
+│   ├── security-group.tf   # SGs: EC2 (22,80,443,9100) e RDS e Monitor
+│   ├── internet-gw.tf      # Internet Gateway + route table pública
+│   ├── route.tf            # Associações subnets públicas
+│   ├── subnet-dba.tf       # DB subnet group (legado)
 │   └── private.tf          # Chave SSH gerada via Terraform
+│
+├── infraiscode-private/    # Stack Terraform — VPC privada + RDS
+│   ├── vpc.tf              # VPC 10.0.0.0/16 + 3 subnets privadas + 1 subnet NAT
+│   ├── network.tf          # IGW, NAT Gateway, route tables privada e pública
+│   ├── peering.tf          # VPC Peering (pública ↔ privada) + rota de retorno
+│   ├── rds.tf              # RDS MySQL 8.0 nas subnets privadas
+│   └── variables.tf        # ID da VPC pública
 │
 └── ansible/                # Automação de instalação
     ├── inventory.ini        # Hosts (não versionado)
     ├── wordpress.yml        # Playbook principal WordPress
     ├── monitoramento.yml    # Playbook de monitoramento
+    ├── group_vars/
+    │   └── wordpressturbinado/
+    │       ├── vars.yml     # Variáveis públicas (db_host, db_password via vault)
+    │       └── vault.yml    # Variáveis sensíveis criptografadas (não versionado)
     └── roles/
         ├── wordpress/
-        │   └── tasks/
-        │       ├── main.yml
-        │       ├── install_mysql.yml
-        │       ├── install_wordpress.yml
-        │       └── templates/
-        │           ├── vhost.nginx.conf.j2
-        │           └── wp-config.php.j2
+        │   ├── tasks/
+        │   │   ├── main.yml
+        │   │   ├── install_wordpress.yml
+        │   │   └── templates/
+        │   │       ├── vhost.nginx.conf.j2
+        │   │       └── wp-config.php.j2
+        │   └── templates/
+        │       ├── vhost.nginx.conf.j2
+        │       └── wp-config.php.j2
         └── monitoramento/
             └── tasks/
                 ├── install_prometheus.yaml
@@ -59,12 +126,10 @@ Provisionar dois servidores WordPress na AWS de forma automatizada com Terraform
 
 ---
 
-## Passo 1 — Provisionar Infraestrutura com Terraform
-
-### Inicializar e aplicar
+## Passo 1 — Provisionar Rede Pública + EC2
 
 ```bash
-cd infraiscode-aws/
+cd infraiscode-public/
 terraform init
 terraform plan
 terraform apply
@@ -74,12 +139,12 @@ terraform apply
 
 | Recurso | Descrição |
 |---------|-----------|
-| VPC | `172.16.0.0/16` |
-| Subnets públicas | `172.16.1.0/24` (us-east-1a), `172.16.2.0/24` (us-east-1b) |
-| Internet Gateway | Acesso público às instâncias |
-| Security Group | Portas 22, 80, 443, 9100 liberadas |
-| EC2 `wordpress_a` | Amazon Linux 2023, t3.large, subnet-a |
-| EC2 `wordpress_b` | Amazon Linux 2023, t3.large, subnet-b |
+| VPC pública | `172.16.0.0/16` |
+| Subnets públicas | `172.16.1.0/24` (a), `172.16.2.0/24` (b), `172.16.3.0/24` (c) |
+| Internet Gateway | Saída para internet |
+| Security Group EC2 | Portas 22, 80, 443, 9100 |
+| EC2 `wordpress_a` | Amazon Linux 2023, t3.large, IP público |
+| EC2 `wordpress_b` | Amazon Linux 2023, t3.large, IP público |
 
 ### Obter IPs públicos das instâncias
 
@@ -96,7 +161,65 @@ for r in data.get('values',{}).get('root_module',{}).get('resources',[]):
 
 ---
 
-## Passo 2 — Configurar Inventory do Ansible
+## Passo 2 — Provisionar Rede Privada + RDS
+
+### Arquitetura da rede privada
+
+```
+VPC Pública (172.16.0.0/16)          VPC Privada (10.0.0.0/16)
+┌─────────────────────┐              ┌──────────────────────────────┐
+│  EC2 wordpress_a    │              │  subnet-nat   10.0.0.0/24    │
+│  EC2 wordpress_b    │◄─ Peering ──►│  subnet-priv1 10.0.1.0/24    │
+│                     │              │  subnet-priv2 10.0.2.0/24    │
+└─────────────────────┘              │  subnet-priv3 10.0.3.0/24    │
+                                     │  NAT Gateway (saída internet) │
+                                     │  RDS MySQL 8.0               │
+                                     └──────────────────────────────┘
+```
+
+### Pré-requisito: criar senha no SSM
+
+A senha do RDS é armazenada no AWS SSM Parameter Store e **nunca fica no código**:
+
+```bash
+aws ssm put-parameter \
+  --name "/wordpress/db_password" \
+  --value "<SUA_SENHA_SEGURA>" \
+  --type "SecureString"
+```
+
+> Regras da senha RDS: não usar `@`, `/`, `"` ou espaços.
+
+### Aplicar
+
+```bash
+cd infraiscode-private/
+terraform init
+terraform plan
+terraform apply
+```
+
+### O que é criado
+
+| Recurso | Descrição |
+|---------|-----------|
+| VPC privada | `10.0.0.0/16` |
+| Subnet NAT | `10.0.0.0/24` — apenas para o NAT Gateway |
+| Subnets privadas | `10.0.1.0/24`, `10.0.2.0/24`, `10.0.3.0/24` (multi-AZ) |
+| NAT Gateway | Saída para internet das subnets privadas |
+| VPC Peering | Comunicação entre VPC pública e privada |
+| Security Group RDS | Aceita MySQL (3306) apenas de `172.16.0.0/16` |
+| RDS MySQL 8.0 | `db.t3.micro`, 20GB gp2, nas subnets privadas |
+
+### Obter o endpoint do RDS
+
+```bash
+terraform output rds_endpoint
+```
+
+---
+
+## Passo 3 — Configurar Inventory do Ansible
 
 Crie o arquivo `ansible/inventory.ini` (não versionado por conter IPs e caminhos de chaves):
 
@@ -111,6 +234,30 @@ ansible_ssh_private_key_file=~/.ssh/id_ed25519
 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 ```
 
+### Configurar variáveis sensíveis com Ansible Vault
+
+Crie o arquivo `ansible/group_vars/wordpressturbinado/vault.yml` (não versionado):
+
+```bash
+cd ansible/
+ansible-vault create group_vars/wordpressturbinado/vault.yml
+```
+
+Conteúdo do vault (substitua pelos valores reais):
+
+```yaml
+vault_db_host:     "<OUTPUT_DO_TERRAFORM_rds_endpoint>"
+vault_db_name:     "wordpress"
+vault_db_user:     "wpuser"
+vault_db_password: "<SUA_SENHA_DO_RDS>"
+```
+
+Para editar depois:
+
+```bash
+ansible-vault edit group_vars/wordpressturbinado/vault.yml
+```
+
 ### Testar conectividade
 
 ```bash
@@ -120,37 +267,27 @@ ansible -i inventory.ini wordpressturbinado -m ping
 
 ---
 
-## Passo 3 — Instalar WordPress com Ansible
+## Passo 4 — Instalar WordPress com Ansible
 
 ```bash
 cd ansible/
-ansible-playbook -i inventory.ini wordpress.yml
+ansible-playbook -i inventory.ini wordpress.yml --ask-vault-pass
 ```
 
 ### O que é instalado em cada instância
 
 | Componente | Versão |
 |------------|--------|
-| MariaDB | 10.5 |
 | Nginx | latest |
 | PHP | 8.1 (Amazon Linux 2023) |
+| PHP-FPM | latest |
 | WordPress | latest |
 
-### Credenciais do banco de dados
-
-> **Atenção:** altere as credenciais abaixo antes de usar em produção.
-
-| Parâmetro | Valor |
-|-----------|-------|
-| Database | `wordpress` |
-| Usuário | `wpuser` |
-| Senha | `Wp@12345` |
-
-As credenciais ficam em `roles/wordpress/tasks/install_mysql.yml` e `roles/wordpress/tasks/templates/wp-config.php.j2`.
+> O banco de dados **não é instalado nas EC2** — o WordPress aponta diretamente para o RDS na rede privada via `db_host` definido no Ansible Vault.
 
 ---
 
-## Passo 4 — Acessar via SSH
+## Passo 5 — Acessar via SSH
 
 ```bash
 # wordpress_a
@@ -162,7 +299,7 @@ ssh -i ~/.ssh/id_ed25519 ec2-user@<IP_PUBLICO_B>
 
 ---
 
-## Passo 5 — Acessar o WordPress
+## Passo 6 — Acessar o WordPress
 
 Após a instalação, acesse pelo navegador:
 
@@ -175,7 +312,7 @@ Complete o assistente de instalação do WordPress para definir o título do sit
 
 ---
 
-## Passo 6 — Monitoramento (Prometheus + Grafana)
+## Passo 7 — Monitoramento (Prometheus + Grafana)
 
 ```bash
 cd ansible/
