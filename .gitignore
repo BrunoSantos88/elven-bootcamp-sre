@@ -6,6 +6,7 @@
 **/terraform.tfstate
 **/terraform.tfstate.backup
 **/providers.tf
+.claude
 
 # ============================================================
 # Chaves SSH e certificados
