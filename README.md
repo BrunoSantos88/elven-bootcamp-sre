@@ -146,18 +146,22 @@ terraform apply
 | EC2 `wordpress_a` | Amazon Linux 2023, t3.large, IP público |
 | EC2 `wordpress_b` | Amazon Linux 2023, t3.large, IP público |
 
-### Obter IPs públicos das instâncias
+### IPs públicos das instâncias
 
 ```bash
-terraform show -json | python3 -c "
-import json,sys
-data=json.load(sys.stdin)
-for r in data.get('values',{}).get('root_module',{}).get('resources',[]):
-    if r['type']=='aws_instance':
-        attrs=r['values']
-        print(f\"{attrs.get('tags',{}).get('Name')}: {attrs.get('public_ip')}\")
-"
+aws ec2 describe-instances \
+  --filters "Name=tag:Name,Values=wordpress_a,wordpress_b" \
+            "Name=instance-state-name,Values=running" \
+  --query "Reservations[].Instances[].[Tags[?Key=='Name'].Value|[0],PublicIpAddress]" \
+  --output table
 ```
+
+Exemplo de saída:
+
+| Instância | IP Público |
+|-----------|------------|
+| wordpress_a | `<IP_PUBLICO_A>` |
+| wordpress_b | `<IP_PUBLICO_B>` |
 
 ---
 
