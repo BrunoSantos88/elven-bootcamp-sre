@@ -1,29 +1,44 @@
 ---
   - name: Instalacao nginx e php para o funcionamento do WP
-    apt:
-      pkg:
-      - nginx
-      - unzip
-      - php7.4-zip
-      - php-imagick
-      - php7.4-curl
-      - php7.4-fpm
-      - php7.4-mbstring
-      - php7.4-cli
-      - php7.4-bcmath
-      - php7.4-xml
-      - php7.4-mysql
-      - php7.4-common
-      - php7.4-gd
-      - php7.4-json
-      update_cache: yes
-  
+    dnf:
+      name:
+        - nginx
+        - unzip
+        - php
+        - php-fpm
+        - php-mysqlnd
+        - php-gd
+        - php-curl
+        - php-mbstring
+        - php-xml
+        - php-zip
+        - php-bcmath
+        - php-json
+      state: present
+
+  - name: Criando diretorio web
+    file:
+      path: /var/www/html
+      state: directory
+      mode: '0755'
+
+  - name: Iniciando e habilitando php-fpm
+    service:
+      name: php-fpm
+      state: started
+      enabled: yes
+
   - name: Configuracao do vhost nginx
     template:
       src: vhost.nginx.conf.j2
-      dest: /etc/nginx/sites-enabled/default 
-  
-  - name : Baixando o projeto do wordpress e descompactando 
+      dest: /etc/nginx/conf.d/wordpress.conf
+
+  - name: Removendo config padrao do nginx
+    file:
+      path: /etc/nginx/conf.d/default.conf
+      state: absent
+
+  - name: Baixando o projeto do wordpress e descompactando
     ansible.builtin.unarchive:
       src: https://wordpress.org/latest.zip
       dest: /var/www/html
@@ -33,15 +48,17 @@
     template:
       src: wp-config.php.j2
       dest: /var/www/html/wordpress/wp-config.php
-  
-  - name: Alterando permissão da pasta /var/www/html/wordpress
+
+  - name: Alterando permissao da pasta /var/www/html/wordpress
     ansible.builtin.file:
       path: /var/www/html/wordpress
-      owner: www-data
-      group: www-data
-      mode: '0755' 
+      owner: nginx
+      group: nginx
+      recurse: yes
+      mode: '0755'
 
-  - name: restarted nginx
+  - name: Restarting nginx
     service:
       name: nginx
       state: restarted
+      enabled: yes

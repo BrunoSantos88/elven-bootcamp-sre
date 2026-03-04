@@ -1,23 +1,34 @@
 ---
-  - name: instalacao mysql-server
-    apt:
-      pkg:      
-      - mysql-server
-      - mysql-client
-      - python3-mysqldb
-      - libmysqlclient-dev
+  - name: Instalacao mariadb e pip
+    dnf:
+      name:
+        - mariadb105-server
+        - mariadb105
+        - python3-pip
+      state: present
 
-      update_cache: yes
-   
+  - name: Instalacao PyMySQL via pip
+    pip:
+      name: PyMySQL
+      executable: pip3
+
+  - name: Iniciando e habilitando o servico mariadb
+    service:
+      name: mariadb
+      state: started
+      enabled: yes
+
   - name: Criando usuario no banco mysql
     mysql_user:
-        name: "wpuser"
-        password: "Wp@12345"
-        priv: '*.*:ALL'
-        host: "%"
-        state: present 
-  
+      name: "wpuser"
+      password: "Wp@12345"
+      priv: '*.*:ALL'
+      host: "%"
+      state: present
+      login_unix_socket: /var/lib/mysql/mysql.sock
+
   - name: Criando database wordpress
     mysql_db:
-        name: "wordpress"
-        state: present     
+      name: "wordpress"
+      state: present
+      login_unix_socket: /var/lib/mysql/mysql.sock

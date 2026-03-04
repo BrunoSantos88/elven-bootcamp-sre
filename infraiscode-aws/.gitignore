@@ -3,3 +3,4 @@
 terraform.tfstate
 providers.tf
 terraform.tfstate.backup
+id_rsa_wordpress.pem
