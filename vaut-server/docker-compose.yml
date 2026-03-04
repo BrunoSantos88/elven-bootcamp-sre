@@ -9,9 +9,8 @@ services:
       - "8200:8200"
     cap_add:
       - IPC_LOCK
-    environment:
-      VAULT_DEV_ROOT_TOKEN_ID: "root88"
-      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    env_file:
+      - .env
     volumes:
       - vault-data:/vault/file
 

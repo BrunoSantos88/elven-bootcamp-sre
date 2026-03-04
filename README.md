@@ -204,12 +204,31 @@ terraform apply
 | Recurso | Descrição |
 |---------|-----------|
 | VPC privada | `10.0.0.0/16` |
-| Subnet NAT | `10.0.0.0/24` — apenas para o NAT Gateway |
-| Subnets privadas | `10.0.1.0/24`, `10.0.2.0/24`, `10.0.3.0/24` (multi-AZ) |
-| NAT Gateway | Saída para internet das subnets privadas |
-| VPC Peering | Comunicação entre VPC pública e privada |
-| Security Group RDS | Aceita MySQL (3306) apenas de `172.16.0.0/16` |
-| RDS MySQL 8.0 | `db.t3.micro`, 20GB gp2, nas subnets privadas |
+| Subnet NAT | `10.0.0.0/24` — subnet pública exclusiva para o NAT Gateway |
+| Subnets privadas | `10.0.1.0/24` (1a), `10.0.2.0/24` (1b), `10.0.3.0/24` (1c) |
+| Internet Gateway | Necessário para o NAT Gateway ter saída para a internet |
+| Elastic IP | IP público fixo associado ao NAT Gateway |
+| NAT Gateway | Recebe tráfego das subnets privadas e sai via IGW |
+| Route table NAT | Subnet NAT → `0.0.0.0/0` via Internet Gateway |
+| Route table privada | Subnets privadas → `0.0.0.0/0` via NAT Gateway |
+| VPC Peering | Comunicação direta entre VPC pública e privada |
+| Security Group RDS | Aceita MySQL (3306) apenas do CIDR `172.16.0.0/16` |
+| RDS MySQL 8.0 | `db.t3.micro`, 20GB gp2, nas 3 subnets privadas |
+
+### Fluxo de rede
+
+```
+Subnets privadas (RDS)
+  10.0.1.0/24
+  10.0.2.0/24      →  NAT Gateway (10.0.0.x)  →  Internet Gateway  →  Internet
+  10.0.3.0/24             (saída apenas)             (igw-vpc-privada)
+
+EC2 (VPC pública 172.16.x.x)  ←──  VPC Peering  ──→  RDS (VPC privada 10.0.x.x)
+```
+
+- As subnets privadas **não recebem tráfego da internet** — apenas saem pelo NAT
+- O RDS é acessado pelas EC2 diretamente via **VPC Peering**, sem passar pela internet
+- O NAT Gateway usa um **Elastic IP** fixo para saída
 
 ### Obter o endpoint do RDS
 
@@ -323,16 +342,59 @@ Métricas coletadas via **Node Exporter** (porta 9100):
 
 ---
 
-## Informações de Segurança
+## Segurança — Variáveis e Arquivos Sensíveis
 
-Os arquivos abaixo estão no `.gitignore` e **não devem ser versionados**:
+Nenhuma senha, token ou endpoint deve existir diretamente no código. Todos os dados sensíveis são gerenciados por arquivos `.env` locais protegidos pelo `.gitignore`.
+
+### Arquivos protegidos pelo .gitignore
 
 | Arquivo | Motivo |
 |---------|--------|
-| `*.pem` / `id_ed25519` | Chaves SSH privadas |
-| `terraform.tfstate` | Contém IPs, IDs e dados sensíveis da infra |
-| `ansible/inventory.ini` | Contém IPs das máquinas |
-| `providers.tf` | Pode conter credenciais de provider |
+| `*.pem` / `id_ed25519*` | Chaves SSH privadas |
+| `**/terraform.tfstate` | Contém IPs, senhas e IDs da infra |
+| `**/providers.tf` | Credenciais do provider AWS |
+| `ansible/inventory.ini` | IPs públicos das instâncias |
+| `ansible/.env` | Credenciais do banco de dados |
+| `vaut-server/.env` | Token do HashiCorp Vault |
+
+### Como configurar cada .env
+
+**Ansible** — copie e preencha com os dados reais:
+
+```bash
+cp ansible/.env.example ansible/.env
+```
+
+```yaml
+# ansible/.env
+db_host:     "<OUTPUT: terraform output rds_endpoint>"
+db_name:     "wordpress"
+db_user:     "wpuser"
+db_password: "<SUA_SENHA_DO_RDS>"
+```
+
+**Vault Server** — copie e preencha:
+
+```bash
+cp vaut-server/.env.example vaut-server/.env
+```
+
+```bash
+# vaut-server/.env
+VAULT_DEV_ROOT_TOKEN_ID=SEU_TOKEN_AQUI
+VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+```
+
+**RDS** — senha armazenada no AWS SSM Parameter Store (nunca no código):
+
+```bash
+aws ssm put-parameter \
+  --name "/wordpress/db_password" \
+  --value "<SUA_SENHA_SEGURA>" \
+  --type "SecureString"
+```
+
+> Regra da senha RDS: não usar `@`, `/`, `"` ou espaços.
 
 ---
 
